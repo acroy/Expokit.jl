@@ -10,6 +10,9 @@ for large sparse matrices. For more details about the methods see
 **Note:** Currently only `expv` is available.
 
 ## Usage
+```julia
+Pkg.clone("git://github.com/acroy/Expokit.jl.git")
+```
 
 ## expv
 
