@@ -2,6 +2,9 @@ module Expokit
 
 export expv, expv!
 
+
+const axpy! = Base.LinAlg.axpy!
+
 ###############################################################################
 # calculate matrix exponential acting on some vector, w = exp(t*A)*v,
 # using the Krylov subspace approximation
@@ -57,7 +60,8 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
       p[:] = amat*vm[j]
       for i=1:j
         hm[i,j] = dot(vm[i], p)
-        p[:] = p - hm[i,j]*vm[i]
+        # p[:] = p - hm[i,j]*vm[i]
+        p = axpy!(-hm[i,j], vm[i], p)
       end
       hm[j+1,j] = norm(p)
 
@@ -68,7 +72,8 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
         F = expm(tsgn*tau*hm[1:j,1:j])
         fill!(v, zero(T))
         for k=1:j
-          v[:] = v + beta*vm[k]*F[k,1]
+          # v[:] = v + beta*vm[k]*F[k,1]
+          v = axpy!(beta*F[k,1], vm[k], v)
         end
         mx = j
         break
@@ -104,7 +109,8 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
       if err_loc <= delta * tau * (tau*tol/err_loc)^r
         fill!(v, zero(T))
         for k=1:m+1
-          v[:] = v + beta*vm[k]*F[k,1]
+          # v[:] = v + beta*vm[k]*F[k,1]
+          v = axpy!(beta*F[k,1], vm[k], v)
         end
 
         break
