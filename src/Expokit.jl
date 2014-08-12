@@ -4,6 +4,7 @@ export expv, expv!
 
 
 const axpy! = Base.LinAlg.axpy!
+const expm! = Base.LinAlg.expm!
 
 ###############################################################################
 # calculate matrix exponential acting on some vector, w = exp(t*A)*v,
@@ -17,7 +18,7 @@ expv{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
 				 tol::Real=1e-7, m::Int=min(30,size(amat,1)), norm=Base.norm) = expv!(copy(vec), t, amat; tol=tol, m=m, norm=norm)
 
 function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
-										tol::Real=1e-7, m::Int=min(30,size(amat,1)), norm=Base.norm)
+                    tol::Real=1e-7, m::Int=min(30,size(amat,1)), norm=Base.norm)
 
   if size(vec,1) != size(amat,2)
     error("dimension mismatch")
@@ -41,6 +42,9 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
   tau = signif(tau, 2)
 
   vm = Array(Vector{T}, m+1)
+  for i=1:m+1
+    vm[i]=similar(vec)
+  end
   hm = zeros(T,m+2,m+2)
 
   tf = abs(t)
@@ -54,10 +58,13 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
     tau = min(tf-tk, tau)
 
     # Arnoldi procedure
-    vm[1] = v/beta
+    # vm[1] = v/beta
+    scale!(copy!(vm[1],v),1/beta)
     mx = m
     for j=1:m
-      p[:] = amat*vm[j]
+      # p[:] = amat*vm[j]
+      Base.A_mul_B!(p, amat, vm[j])
+
       for i=1:j
         hm[i,j] = dot(vm[i], p)
         # p[:] = p - hm[i,j]*vm[i]
@@ -69,7 +76,8 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
         tau = tf - tk
         err_loc = btol
 
-        F = expm(tsgn*tau*hm[1:j,1:j])
+        # F = expm(tsgn*tau*hm[1:j,1:j])
+        F = expm!(scale!(tsgn*tau,slice(hm,1:j,1:j)))
         fill!(v, zero(T))
         for k=1:j
           # v[:] = v + beta*vm[k]*F[k,1]
@@ -79,16 +87,18 @@ function expv!{T}( vec::Vector{T}, t::Real, amat::AbstractMatrix;
         break
       end
 
-      vm[j+1] = p/hm[j+1,j]
+      # vm[j+1] = p/hm[j+1,j]
+      scale!(copy!(vm[j+1],p),1/hm[j+1,j])
     end
     hm[m+2,m+1] = one(T)
-    avnorm = norm(amat*vm[m+1])
+    (mx != m) || (avnorm = norm(Base.A_mul_B!(p,amat,vm[m+1])))
 
     # propagate using adaptive step size
     iter = 1
     while (iter < maxiter) && (mx == m)
 
-      F = expm(tsgn*tau*hm[1:m+2,1:m+2])
+      # F = expm(tsgn*tau*hm)
+      F = expm!(scale(tsgn*tau,hm))
 
       # local error estimation
       err1 = abs( beta*F[m+1,1] )
