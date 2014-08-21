@@ -19,10 +19,10 @@ Pkg.clone("git://github.com/acroy/Expokit.jl.git")
 ## expmv
 
 ```julia
-w = expmv!{T}( w::Vector{T}, t::Real, amat::AbstractMatrix, v::Vector{T}; kwargs...)
+w = expmv!{T}( w::Vector{T}, t::Real, A, v::Vector{T}; kwargs...)
 ```
-The function `expmv!` calculates `w = exp(t*amat)*v`, where `amat` is a
-matrix and `v` a vector by using Krylov subspace projections. The result is
+The function `expmv!` calculates `w = exp(t*A)*v`, where `A` is a
+matrix or any type that supports `norm`, `size` and `A_mul_B!` and `v` a dense vector by using Krylov subspace projections. The result is
 stored in `w`.
 
 The following keywords are supported
@@ -32,6 +32,6 @@ The following keywords are supported
 
 For convenience, the following versions of `expmv` are provided
 ```julia
-v = expmv!{T}( t::Real, amat::AbstractMatrix, v::Vector{T}; kwargs...)
-w = expmv{T}( t::Real, amat::AbstractMatrix, v::Vector{T}; kwargs...)
+v = expmv!{T}( t::Real, A, v::Vector{T}; kwargs...)
+w = expmv{T}( t::Real, A, v::Vector{T}; kwargs...)
 ```

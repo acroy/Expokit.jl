@@ -14,17 +14,17 @@ const expm! = Base.LinAlg.expm!
 # and http://www.maths.uq.edu.au/expokit
 #
 #
-expmv{T}( t::Real, amat::AbstractMatrix, vec::Vector{T};
-			tol::Real=1e-7, m::Int=min(30,size(amat,1)), norm=Base.norm) = expmv!(t, amat, copy(vec); tol=tol, m=m, norm=norm)
+expmv{T}( t::Real, A, vec::Vector{T};
+			tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm) = expmv!(t, A, copy(vec); tol=tol, m=m, norm=norm)
 
-expmv!{T}( t::Real, amat::AbstractMatrix, vec::Vector{T};
-			tol::Real=1e-7, m::Int=min(30,size(amat,1)), norm=Base.norm) = expmv!(vec, t, amat, vec; tol=tol, m=m, norm=norm)
+expmv!{T}( t::Real, A, vec::Vector{T};
+			tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
 
 
-function expmv!{T}( w::Vector{T}, t::Real, amat::AbstractMatrix, vec::Vector{T};
-	tol::Real=1e-7, m::Int=min(30,size(amat,1)), norm=Base.norm)
+function expmv!{T}( w::Vector{T}, t::Real, A, vec::Vector{T};
+	tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm)
 
-	if size(vec,1) != size(amat,2)
+	if size(vec,1) != size(A,2)
 		error("dimension mismatch")
 	end
 
@@ -35,7 +35,7 @@ function expmv!{T}( w::Vector{T}, t::Real, amat::AbstractMatrix, vec::Vector{T};
 	btol = 1e-7 	# tolerance for "happy-breakdown"
 	maxiter = 10	# max number of time-step refinements
 
-	anorm = norm(amat, Inf)
+	anorm = norm(A, Inf)
 	rndoff= anorm*eps()
 
 	# estimate first time-step and round to two significant digits
@@ -67,8 +67,8 @@ function expmv!{T}( w::Vector{T}, t::Real, amat::AbstractMatrix, vec::Vector{T};
 		scale!(copy!(vm[1],w),1/beta)
 		mx = m
 		for j=1:m
-			# p[:] = amat*vm[j]
-			Base.A_mul_B!(p, amat, vm[j])
+			# p[:] = A*vm[j]
+			Base.A_mul_B!(p, A, vm[j])
 
 			for i=1:j
 				hm[i,j] = dot(vm[i], p)
@@ -96,7 +96,7 @@ function expmv!{T}( w::Vector{T}, t::Real, amat::AbstractMatrix, vec::Vector{T};
 			scale!(copy!(vm[j+1],p),1/hm[j+1,j])
 		end
 		hm[m+2,m+1] = one(T)
-		(mx != m) || (avnorm = norm(Base.A_mul_B!(p,amat,vm[m+1])))
+		(mx != m) || (avnorm = norm(Base.A_mul_B!(p,A,vm[m+1])))
 
 		# propagate using adaptive step size
 		iter = 1
