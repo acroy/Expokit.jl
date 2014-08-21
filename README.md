@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/acroy/Expokit.jl.png)](https://travis-ci.org/acroy/Expokit.jl)
+
 # Expokit
 
 This package provides Julia implementations of some routines contained
@@ -7,22 +9,29 @@ for large sparse matrices. For more details about the methods see
 *R.B. Sidje, ACM Trans. Math. Softw., 24(1):130-156, 1998*
 (or [its preprint](http://www.expokit.org/paper.pdf)).
 
-**Note:** Currently only `expv` is available.
+**Note:** Currently only `expmv` (which is called `expv` in EXPOKIT) is available.
 
 ## Usage
 ```julia
 Pkg.clone("git://github.com/acroy/Expokit.jl.git")
 ```
 
-## expv
+## expmv
 
 ```julia
-w = expv{T}( v::Vector{T}, t::Real, amat::AbstractMatrix; kwargs...)
+w = expmv!{T}( w::Vector{T}, t::Real, amat::AbstractMatrix, v::Vector{T}; kwargs...)
 ```
-The function `expv` calculates `w = exp(t*amat)*v`, where `amat` is a
-matrix and `v` a vector by using Krylov subspace projections.
+The function `expmv!` calculates `w = exp(t*amat)*v`, where `amat` is a
+matrix and `v` a vector by using Krylov subspace projections. The result is
+stored in `w`.
 
 The following keywords are supported
 - `tol`: tolerance to control step size
 - `m`: size of Krylov subspace
 - `norm`: user-supplied norm
+
+For convenience, the following versions of `expmv` are provided
+```julia
+v = expmv!{T}( t::Real, amat::AbstractMatrix, v::Vector{T}; kwargs...)
+w = expmv{T}( t::Real, amat::AbstractMatrix, v::Vector{T}; kwargs...)
+```
