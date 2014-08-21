@@ -14,14 +14,14 @@ const expm! = Base.LinAlg.expm!
 # and http://www.maths.uq.edu.au/expokit
 #
 #
-expmv{T}( t::Real, A, vec::Vector{T};
+expmv{T}( t::Number, A, vec::Vector{T};
 			tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm) = expmv!(t, A, copy(vec); tol=tol, m=m, norm=norm)
 
-expmv!{T}( t::Real, A, vec::Vector{T};
+expmv!{T}( t::Number, A, vec::Vector{T};
 			tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
 
 
-function expmv!{T}( w::Vector{T}, t::Real, A, vec::Vector{T};
+function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
 	tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm)
 
 	if size(vec,1) != size(A,2)
@@ -54,7 +54,7 @@ function expmv!{T}( w::Vector{T}, t::Real, A, vec::Vector{T};
 
 	tf = abs(t)
 	tsgn = sign(t)
-	tk = zero(t)
+	tk = zero(tf)
 
 	copy!(w, vec)
 	p = similar(w)
