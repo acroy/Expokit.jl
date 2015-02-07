@@ -14,13 +14,13 @@ const expm! = Base.LinAlg.expm!
 # and http://www.maths.uq.edu.au/expokit
 #
 #
-function expmv{T1,T2}(  t::Number, 
-                        A::SparseMatrixCSC{T1,Int64}, 
-                        vec::Vector{T2};
-                        tol::Real=1e-7, 
-                        m::Int=min(30,size(A,1)), 
-                        norm=Base.norm)
-  result = convert(Vector{promote_type(T1,T2,typeof(t))},copy(vec))
+function expmv{T}( t::Number, 
+                   A, 
+                   vec::Vector{T};
+                   tol::Real=1e-7, 
+                   m::Int=min(30,size(A,1)), 
+                   norm=Base.norm)
+  result = convert(Vector{promote_type(eltype(A),T,typeof(t))},copy(vec))
   expmv!(t, A, result; tol=tol, m=m, norm=norm)
   return result
 end
