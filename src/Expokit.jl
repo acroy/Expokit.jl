@@ -82,7 +82,7 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
 				err_loc = btol
 
 				# F = expm(tsgn*tau*hm[1:j,1:j])
-				F = expm!(scale!(tsgn*tau,slice(hm,1:j,1:j)))
+				F = expm!(scale(tsgn*tau,slice(hm,1:j,1:j)))
 				fill!(w, zero(T))
 				for k=1:j
 					# w[:] = w + beta*vm[k]*F[k,1]
