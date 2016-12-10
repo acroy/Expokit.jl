@@ -2,6 +2,8 @@ module Expokit
 
 export expmv, expmv!
 
+using Compat
+import Compat.view
 
 const axpy! = Base.LinAlg.axpy!
 const expm! = Base.LinAlg.expm!
