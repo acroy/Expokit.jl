@@ -2,6 +2,8 @@ module Expokit
 
 export expmv, expmv!
 
+using Compat
+import Compat.view
 
 const axpy! = Base.LinAlg.axpy!
 const expm! = Base.LinAlg.expm!
@@ -90,7 +92,9 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
 				err_loc = btol
 
 				# F = expm(tsgn*tau*hm[1:j,1:j])
-				F = expm!(scale(tsgn*tau,slice(hm,1:j,1:j)))
+				#F = expm!(scale(tsgn*tau,view(hm,1:j,1:j)))
+				F = expm!(tsgn*tau*view(hm,1:j,1:j))
+				
 				fill!(w, zero(T))
 				for k=1:j
 					# w[:] = w + beta*vm[k]*F[k,1]
@@ -111,8 +115,9 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
 		while (iter < maxiter) && (mx == m)
 
 			# F = expm(tsgn*tau*hm)
-			F = expm!(scale(tsgn*tau,hm))
-
+			#F = expm!(scale(tsgn*tau,hm))
+			F = expm!(tsgn*tau*hm)
+			
 			# local error estimation
 			err1 = abs( beta*F[m+1,1] )
 			err2 = abs( beta*F[m+2,1] * avnorm )
