@@ -56,7 +56,7 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
 	tau = signif(tau, 2)
 
 	# storage for Krylov subspace vectors
-	vm = Array(typeof(w), m+1)
+	vm = Array{typeof(w)}(m+1)
 	for i=1:m+1
 		vm[i]=similar(w)
 	end
