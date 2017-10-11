@@ -84,7 +84,7 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
             end
             hm[j+1,j] = norm(p)
 
-	        if real(hm[j+1,j]) < btol # happy-breakdown
+            if real(hm[j+1,j]) < btol # happy-breakdown
                 tau = tf - tk
                 err_loc = btol
 
