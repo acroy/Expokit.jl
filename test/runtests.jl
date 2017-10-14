@@ -65,3 +65,43 @@ e1, e2 = test_expmv3()
 println("residua: $e1, $e2\n")
 @test e1 < 1e-10
 @test e2 < 1e-10
+
+function test_padm(n::Int)
+
+    A = sprand(n,n,0.001)
+
+    tic()
+    w1 = padm(A)
+    t1 = toc()
+
+    tic()
+    w2 = expm(full(A))
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+function test_padm2(n::Int)
+
+    A = sprand(n,n,0.002) + 1im*sprand(n,n,0.002)
+
+    tic()
+    w1 = padm(A, v)
+    t1 = toc()
+
+    tic()
+    w2 = expm(full(A))
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+println("testing real n=1000 (first padm, then expm)")
+res, t1, t2 = test_padm(1000)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing complex n=1000 (first padm, then expm)")
+res, t1, t2 = test_padm(1000)
+println("residuum: $res\n")
+@test res < 1e-6
