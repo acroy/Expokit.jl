@@ -83,10 +83,10 @@ end
 
 function test_padm2(n::Int)
 
-    A = sprand(n,n,0.002) + 1im*sprand(n,n,0.002)
+    A = sprand(n,n,0.0005) + 1im*sprand(n,n,0.0005)
 
     tic()
-    w1 = padm(A, v)
+    w1 = padm(A)
     t1 = toc()
 
     tic()
@@ -101,7 +101,7 @@ res, t1, t2 = test_padm(1000)
 println("residuum: $res\n")
 @test res < 1e-6
 
-println("testing complex n=1000 (first padm, then expm)")
-res, t1, t2 = test_padm(1000)
+println("testing complex n=100 (first padm, then expm)")
+res, t1, t2 = test_padm2(1000)
 println("residuum: $res\n")
 @test res < 1e-6
