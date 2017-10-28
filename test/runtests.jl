@@ -105,3 +105,65 @@ println("testing complex n=100 (first padm, then expm)")
 res, t1, t2 = test_padm2(1000)
 println("residuum: $res\n")
 @test res < 1e-6
+
+function test_chbv(n::Int)
+
+    p = 0.1
+    D = diagm(-rand(n))
+    T = sprandn(n, n, p)
+    H = T * D * T.'  # random negative semidefinite symmetric matrix
+    vec = randn(n)
+    w1 = chbv(H, vec);
+
+    tic()
+    w1 = chbv(H, vec)
+    t1 = toc()
+
+    w2 = expm(full(H)) * vec
+    tic()
+    w2 = expm(full(H)) * vec
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+function test_chbv2(n::Int)
+
+    p = 0.1
+    D = diagm(-rand(n))
+    T = sprandn(n, n, p) + sprandn(n, n, p)*im
+    H = T * D * T'  # random negative semidefinite hermitian matrix
+    vec = randn(n) + randn(n)*im
+    w1 = chbv(H, vec);
+
+    tic()
+    w1 = chbv(H, vec)
+    t1 = toc()
+
+    w2 = expm(full(H)) * vec
+    tic()
+    w2 = expm(full(H)) * vec
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+println("testing real n=100 (first chbv, then expm)")
+res, t1, t2 = test_chbv(100)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing complex n=100 (first chbv, then expm)")
+res, t1, t2 = test_chbv2(100)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing real n=1000 (first chbv, then expm)")
+res, t1, t2 = test_chbv(1000)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing complex n=1000 (first chbv, then expm)")
+res, t1, t2 = test_chbv2(1000)
+println("residuum: $res\n")
+@test res < 1e-6
