@@ -9,7 +9,7 @@ for large sparse matrices. For more details about the methods see
 *R.B. Sidje, ACM Trans. Math. Softw., 24(1):130-156, 1998*
 (or [its preprint](http://www.maths.uq.edu.au/expokit/paper.pdf)).
 
-**Note:** Currently only `expmv` (which is called `expv` in EXPOKIT) is available.
+**Note:** Apart from `expmv` (which is called `expv` in EXPOKIT) also `phimv`, `padm` and `chbv` are available.
 
 ## Usage
 ```julia
