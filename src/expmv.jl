@@ -1,8 +1,5 @@
 export expmv, expmv!
 
-const axpy! = Base.LinAlg.axpy!
-const expm! = Base.LinAlg.expm!
-
 """
     expmv{T}(t, A, vec; [tol], [m], [norm])
 

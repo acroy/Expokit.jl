@@ -36,7 +36,7 @@ end
 function test_expmv3()
     e1 = norm(expm(pi/4*[0 1; 1 0])*[1.; 0.] - expmv(pi/4,[0 1; 1 0]|>sparse, [1.; 0.]))
     e2 = norm(expm(-pi/4*1im*[0 1; 1 0])*[1.; 0.] - expmv(pi/4,-1im*[0 1; 1 0]|>sparse, [1.+0im; 0.]))
-    
+
     return e1, e2
 end
 
@@ -165,5 +165,85 @@ println("residuum: $res\n")
 
 println("testing complex n=1000 (first chbv, then expm)")
 res, t1, t2 = test_chbv2(1000)
+println("residuum: $res\n")
+@test res < 1e-6
+
+function test_phimv(n::Int)
+
+    p = 0.1
+    found = false
+    A = sprand(n, n, p)
+    u = rand(n)
+    x = similar(u)
+    while !found
+        try
+            copy!(x, A\u)
+            found = true
+        catch
+            A = sprand(n, n, p)
+        end
+    end
+    vec = eye(n, 1)[:]
+
+    w1 = phimv(1.0, A, u, vec) # warmup
+    tic()
+    w1 = phimv(1.0, A, u, vec)
+    t1 = toc()
+
+    w2 = expm(full(A))*(vec+x)-x # warmup
+    tic()
+    w2 = expm(full(A))*(vec+x)-x
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+function test_phimv2(n::Int)
+
+    p = 0.1
+    found = false
+    A = sprand(n, n, p) + 1im*sprand(n, n, p)
+    u = rand(n) + 1im*rand(n)
+    x = similar(u)
+    while !found
+        try
+            copy!(x, A\u)
+            found = true
+        catch
+            A = sprand(n, n, p) + 1im*sprand(n, n, p)
+        end
+    end
+    vec = eye(n, 1)[:] + 0im*eye(n,1)[:]
+
+    w1 = phimv(1.0, A, u, vec) # warmup
+    tic()
+    w1 = phimv(1.0, A, u, vec)
+    t1 = toc()
+
+    w2 = expm(full(A))*(vec+x)-x # warmup
+    tic()
+    w2 = expm(full(A))*(vec+x)-x
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+println("testing real n=100 (first phimv, then expm)")
+res, t1, t2 = test_phimv(100)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing complex n=100 (first phimv, then expm)")
+res, t1, t2 = test_phimv2(100)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing real n=1000 (first phimv, then expm)")
+res, t1, t2 = test_phimv(1000)
+println("residuum: $res\n")
+@test res < 1e-6
+
+println("testing complex n=1000 (first phimv, then expm)")
+res, t1, t2 = test_phimv2(1000)
 println("residuum: $res\n")
 @test res < 1e-6
