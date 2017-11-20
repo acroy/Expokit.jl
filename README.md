@@ -13,7 +13,7 @@ for large sparse matrices. For more details about the methods see
 
 ## Usage
 ```julia
-Pkg.clone("git://github.com/acroy/Expokit.jl.git")
+Pkg.add("Expokit")
 ```
 
 ## expmv
