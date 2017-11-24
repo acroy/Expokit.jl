@@ -1,4 +1,4 @@
-export chbv, chbv!
+export chbmv, chbmv!
 
 const α0 = 0.183216998528140087E-11
 
@@ -40,7 +40,7 @@ const θconj = [0.562314417475317895E+01 + im*0.119406921611247440E+01,
               -0.889777151877331107E+01 + im*0.166309842834712071E+02]
 
 """
-    chbv(A, vec)
+    chbmv(A, vec)
 
 Calculate matrix exponential acting on some vector using the Chebyshev method.
 
@@ -51,16 +51,16 @@ Calculate matrix exponential acting on some vector using the Chebyshev method.
 
 # Notes
 
-This Julia implementation is based on Expokit's CHBV Matlab code by
+This Julia implementation is based on Expokit's chbv Matlab code by
 Roger B. Sidje, see below.
 
---- 
+---
 
     y = chbv( H, x )
-    CHBV computes the direct action of the matrix exponential on
+    chbv computes the direct action of the matrix exponential on
     a vector: y = exp(H) * x. It uses the partial fraction expansion of
     the uniform rational Chebyshev approximation of type (14,14).
-    About 14-digit accuracy is expected if the matrix H is symmetric 
+    About 14-digit accuracy is expected if the matrix H is symmetric
     negative definite. The algorithm may behave poorly otherwise.
     See also PADM, EXPOKIT.
 
@@ -68,14 +68,14 @@ Roger B. Sidje, see below.
     EXPOKIT: Software Package for Computing Matrix Exponentials.
     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 """
-function chbv{T}(A, vec::Vector{T})
+function chbmv{T}(A, vec::Vector{T})
     result = convert(Vector{promote_type(eltype(A), T)}, copy(vec))
-    return chbv!(result, A, vec)
+    return chbmv!(result, A, vec)
 end
 
-chbv!{T}(A, vec::Vector{T}) = chbv!(vec, A, copy(vec))
+chbmv!{T}(A, vec::Vector{T}) = chbmv!(vec, A, copy(vec))
 
-function chbv!{T<:Real}(w::Vector{T}, A, vec::Vector{T})
+function chbmv!{T<:Real}(w::Vector{T}, A, vec::Vector{T})
     p = min(length(θ), length(α))
     scale!(copy!(w, vec), α0)
     @inbounds for i = 1:p
@@ -84,7 +84,7 @@ function chbv!{T<:Real}(w::Vector{T}, A, vec::Vector{T})
     return w
 end
 
-function chbv!{T<:Complex}(w::Vector{T}, A, vec::Vector{T})
+function chbmv!{T<:Complex}(w::Vector{T}, A, vec::Vector{T})
     p = min(length(θ), length(α))
     scale!(copy!(w, vec), α0)
     t = [θ; θconj]
@@ -93,4 +93,4 @@ function chbv!{T<:Complex}(w::Vector{T}, A, vec::Vector{T})
         w .+= (A - t[i]*I) \ (a[i] * vec)
     end
     return w
-end # chbv!
+end # chbmv!
