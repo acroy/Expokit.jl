@@ -23,21 +23,8 @@ const θ = [0.562314417475317895E+01 - im*0.119406921611247440E+01,
           -0.370327340957595652E+01 - im*0.136563731924991884E+02,
           -0.889777151877331107E+01 - im*0.166309842834712071E+02]
 
-const αconj = [-0.557503973136501826E+02 - im*0.204295038779771857E+03,
-                0.938666838877006739E+02 + im*0.912874896775456363E+02,
-               -0.469965415550370835E+02 - im*0.116167609985818103E+02,
-                0.961424200626061065E+01 - im*0.264195613880262669E+01,
-               -0.752722063978321642E+00 + im*0.670367365566377770E+00,
-                0.188781253158648576E-01 - im*0.343696176445802414E-01,
-               -0.143086431411801849E-03 + im*0.287221133228814096E-03]
-
-const θconj = [0.562314417475317895E+01 + im*0.119406921611247440E+01,
-               0.508934679728216110E+01 + im*0.358882439228376881E+01,
-               0.399337136365302569E+01 + im*0.600483209099604664E+01,
-               0.226978543095856366E+01 + im*0.846173881758693369E+01,
-              -0.208756929753827868E+00 + im*0.109912615662209418E+02,
-              -0.370327340957595652E+01 + im*0.136563731924991884E+02,
-              -0.889777151877331107E+01 + im*0.166309842834712071E+02]
+const αconj = conj(α)
+const θconj = conj(θ)
 
 """
     chbmv(A, vec)
@@ -75,22 +62,43 @@ end
 
 chbmv!{T}(A, vec::Vector{T}) = chbmv!(vec, A, copy(vec))
 
-function chbmv!{T<:Real}(w::Vector{T}, A, vec::Vector{T})
+function chbmv!{T<:Real}(w::Vector{T}, A, vec::Vector{T}, fac=factorize)
     p = min(length(θ), length(α))
     scale!(copy!(w, vec), α0)
-    @inbounds for i = 1:p
-        w .+= real((A - θ[i]*I) \ (α[i] * vec))
-    end
-    return w
-end
+    tmp_v = similar(vec, Complex128)
+    B = A - θ[1]*I  # make copy of A with diagonal elements
 
-function chbmv!{T<:Complex}(w::Vector{T}, A, vec::Vector{T})
+    @inbounds for i = 1:p
+        scale!(copy!(tmp_v, vec), α[i])
+        copy!(B,A)
+        for n=1:size(B,1)
+            B[n,n] = A[n,n] - θ[i]
+        end
+        A_ldiv_B!( fac(B), tmp_v)
+        w .+= real.( tmp_v )
+    end
+
+    return w
+end # chbmv
+
+function chbmv!{T<:Complex}(w::Vector{T}, A, vec::Vector{T}, fac=factorize)
     p = min(length(θ), length(α))
-    scale!(copy!(w, vec), α0)
     t = [θ; θconj]
     a = 0.5 * [α; αconj]
+
+    scale!(copy!(w, vec), α0)
+    tmp_v = similar(vec)
+    B = A - θ[1]*I  # make copy of A with diagonal elements
+
     @inbounds for i = 1:2*p
-        w .+= (A - t[i]*I) \ (a[i] * vec)
+        scale!(copy!(tmp_v, vec), a[i])
+        copy!(B,A)
+        for n=1:size(B,1)
+            B[n,n] = A[n,n] - t[i]
+        end
+        A_ldiv_B!( fac(B), tmp_v)
+        w .+=  tmp_v
     end
+
     return w
 end # chbmv!
