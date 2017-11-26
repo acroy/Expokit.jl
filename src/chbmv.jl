@@ -27,7 +27,7 @@ const αconj = conj(α)
 const θconj = conj(θ)
 
 """
-    chbmv(A, vec)
+    chbmv(A, vec[, fac])
 
 Calculate matrix exponential acting on some vector using the Chebyshev method.
 
@@ -35,6 +35,8 @@ Calculate matrix exponential acting on some vector using the Chebyshev method.
 
 - `A`   -- matrix which can be dense or sparse
 - `vec` -- vector on which the matrix exponential of `A` is applied
+- `fac` -- optional factorization function (default: `factorize`);
+           `fac` may change its input to avoid allocation
 
 # Notes
 
