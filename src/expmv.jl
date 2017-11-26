@@ -79,9 +79,9 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
                 # p[:] = p - hm[i,j]*vm[i]
                 p = axpy!(-hm[i,j], vm[i], p)
             end
-            hm[j+1,j] = norm(p)
+            s = norm(p)
 
-            if real(hm[j+1,j]) < btol # happy-breakdown
+            if s < btol # happy-breakdown
                 tau = tf - tk
                 err_loc = btol
 
@@ -97,6 +97,7 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
                 mx = j
                 break
             end
+            hm[j+1,j] = s
 
             # vm[j+1] = p/hm[j+1,j]
             scale!(copy!(vm[j+1],p),1/hm[j+1,j])
@@ -154,6 +155,8 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
         tau = signif(tau, 2) # round to 2 signiﬁcant digits
                              # to prevent numerical noise
         err_loc = max(err_loc,rndoff)
+
+        fill!(hm, zero(T))
     end
 
     return w
