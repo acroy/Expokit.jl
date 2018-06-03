@@ -54,13 +54,13 @@ Calculate matrix exponential acting on some vector using the Chebyshev method.
 This Julia implementation is based on Expokit's CHBV Matlab code by
 Roger B. Sidje, see below.
 
---- 
+---
 
     y = chbv( H, x )
     CHBV computes the direct action of the matrix exponential on
     a vector: y = exp(H) * x. It uses the partial fraction expansion of
     the uniform rational Chebyshev approximation of type (14,14).
-    About 14-digit accuracy is expected if the matrix H is symmetric 
+    About 14-digit accuracy is expected if the matrix H is symmetric
     negative definite. The algorithm may behave poorly otherwise.
     See also PADM, EXPOKIT.
 
@@ -68,14 +68,14 @@ Roger B. Sidje, see below.
     EXPOKIT: Software Package for Computing Matrix Exponentials.
     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 """
-function chbv{T}(A, vec::Vector{T})
+function chbv(A, vec::Vector{T}) where {T}
     result = convert(Vector{promote_type(eltype(A), T)}, copy(vec))
     return chbv!(result, A, vec)
 end
 
-chbv!{T}(A, vec::Vector{T}) = chbv!(vec, A, copy(vec))
+chbv!(A, vec::Vector{T}) where {T} = chbv!(vec, A, copy(vec))
 
-function chbv!{T<:Real}(w::Vector{T}, A, vec::Vector{T})
+function chbv!(w::Vector{T}, A, vec::Vector{T}) where {T<:Real}
     p = min(length(θ), length(α))
     scale!(copy!(w, vec), α0)
     @inbounds for i = 1:p
@@ -84,7 +84,7 @@ function chbv!{T<:Real}(w::Vector{T}, A, vec::Vector{T})
     return w
 end
 
-function chbv!{T<:Complex}(w::Vector{T}, A, vec::Vector{T})
+function chbv!(w::Vector{T}, A, vec::Vector{T}) where {T<:Complex}
     p = min(length(θ), length(α))
     scale!(copy!(w, vec), α0)
     t = [θ; θconj]
