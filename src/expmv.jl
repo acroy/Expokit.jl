@@ -9,24 +9,24 @@ using the Krylov subspace approximation.
 See R.B. Sidje, ACM Trans. Math. Softw., 24(1):130-156, 1998
 and http://www.maths.uq.edu.au/expokit
 """
-function expmv{T}( t::Number,
-                   A, vec::Vector{T};
-                   tol::Real=1e-7,
-                   m::Int=min(30, size(A, 1)),
-                   norm=Base.norm)
+function expmv(t::Number,
+               A, vec::Vector{T};
+               tol::Real=1e-7,
+               m::Int=min(30, size(A, 1)),
+               norm=Base.norm) where {T}
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
     expmv!(t, A, result; tol=tol, m=m, norm=norm)
     return result
 end
 
-expmv!{T}( t::Number,
-           A, vec::Vector{T};
-           tol::Real=1e-7,
-           m::Int=min(30,size(A,1)),
-           norm=Base.norm) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
+expmv!(t::Number,
+       A, vec::Vector{T};
+       tol::Real=1e-7,
+       m::Int=min(30,size(A,1)),
+       norm=Base.norm) where {T} = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
 
-function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
-                    tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm)
+function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
+                tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm) where {T}
 
     if size(vec,1) != size(A,2)
         error("dimension mismatch")
@@ -45,8 +45,8 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
     # estimate first time-step and round to two significant digits
     beta = norm(vec)
     r = 1/m
-    fact = (((m+1)/exp(1.))^(m+1))*sqrt(2.*pi*(m+1))
-    tau = (1./anorm)*((fact*tol)/(4.*beta*anorm))^r
+    fact = (((m+1)/exp(1.0))^(m+1))*sqrt(2.0*pi*(m+1))
+    tau = (1.0/anorm)*((fact*tol)/(4.0*beta*anorm))^r
     tau = signif(tau, 2)
 
     # storage for Krylov subspace vectors

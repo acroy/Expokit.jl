@@ -11,11 +11,18 @@ R.B. Sidje, ACM Trans. Math. Softw., 24(1):130-156, 1998 (or its
 """
 module Expokit
 
-using Compat
-import Compat.view
+using Compat, Compat.LinearAlgebra
+import Compat:view, String
+const LinearAlgebra = Compat.LinearAlgebra
 
-const axpy! = Base.LinAlg.axpy!
-const expm! = Base.LinAlg.expm!
+if VERSION < v"0.7-"
+    nothing
+else
+    using LinearAlgebra, SparseArrays
+end
+
+const axpy! = LinearAlgebra.axpy!
+const expm! = LinearAlgebra.expm!
 
 include("expmv.jl")
 include("padm.jl")

@@ -31,24 +31,24 @@ Calculate the solution of a nonhomogeneous linear ODE problem with constant inpu
     EXPOKIT: Software Package for Computing Matrix Exponentials.
     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 """
-function phimv{T}( t::Number,
-                   A, u::Vector{T}, vec::Vector{T};
-                   tol::Real=1e-7,
-                   m::Int=min(30, size(A, 1)),
-                   norm=Base.norm)
+function phimv(t::Number,
+               A, u::Vector{T}, vec::Vector{T};
+               tol::Real=1e-7,
+               m::Int=min(30, size(A, 1)),
+               norm=Base.norm) where {T}
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
     phimv!(t, A, u, result; tol=tol, m=m, norm=norm)
     return result
 end
 
-phimv!{T}( t::Number,
-           A, u::Vector{T}, vec::Vector{T};
-           tol::Real=1e-7,
-           m::Int=min(30, size(A, 1)),
-           norm=Base.norm) = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm)
+phimv!(t::Number,
+       A, u::Vector{T}, vec::Vector{T};
+       tol::Real=1e-7,
+       m::Int=min(30, size(A, 1)),
+       norm=Base.norm) where {T} = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm)
 
-function phimv!{T}( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
-                    tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm)
+function phimv!(w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
+                tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm) where {T}
 
     if size(vec, 1) != size(A, 2)
         error("dimension mismatch")
@@ -68,7 +68,7 @@ function phimv!{T}( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
     beta = norm(A*vec + u)
     r = 1/m
     fact = (((m+1)/exp(1))^(m+1))*sqrt(2*pi*(m+1))
-    tau = (1./anorm)*((fact*tol)/(4.*beta*anorm))^r
+    tau = (1.0/anorm)*((fact*tol)/(4.0*beta*anorm))^r
     tau = signif(tau, 2)
 
     # storage for Krylov subspace vectors

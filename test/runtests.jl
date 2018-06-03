@@ -1,5 +1,5 @@
 using Expokit
-using Base.Test
+using Compat.Test
 
 function test_expmv(n::Int)
 
