@@ -40,6 +40,39 @@ function test_expmv3()
     return e1, e2
 end
 
+struct LinearOp
+    m
+end
+
+Base.A_mul_B!(y, lo::LinearOp, x) = A_mul_B!(y, lo.m, x)
+Base.size(lo::LinearOp) = size(lo.m)
+Base.size(lo::LinearOp, i::Int) = size(lo.m, i)
+Base.eltype(lo::LinearOp) = eltype(lo.m)
+
+function test_linop(n::Int)
+    A = LinearOp(sprand(n,n,0.2) + 1im*sprand(n,n,0.2))
+    v = eye(n,1)[:]+0im*eye(n,1)[:]
+
+    tic()
+    w1 = expmv(1.0, A, v, anorm=norm(A.m, Inf))
+    t1 = toc()
+
+    tic()
+    w2 = expmv(1.0, A, v)
+    t2 = toc()
+
+    tic()
+    w3 = expm(full(A.m))*v
+    t3 = toc()
+
+    return max(norm(w1-w2)/norm(w2), norm(w1-w3)/norm(w3)), t1, t2, t3
+end
+
+println("testing linear operator n=1000 (first expmv, then expm)")
+res, t1, t2, t3 = test_linop(1000)
+println("residuum: $res\n")
+@test res < 1e-6
+
 println("testing real n=100 (first expmv, then expm)")
 res, t1, t2 = test_expmv(100)
 println("residuum: $res\n")

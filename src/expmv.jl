@@ -1,7 +1,7 @@
 export expmv, expmv!
 
 """
-    expmv{T}(t, A, vec; [tol], [m], [norm])
+    expmv{T}(t, A, vec; [tol], [m], [norm], [anorm])
 
 Calculate matrix exponential acting on some vector, ``w = e^{tA}v``,
 using the Krylov subspace approximation.
@@ -13,9 +13,9 @@ function expmv{T}( t::Number,
                    A, vec::Vector{T};
                    tol::Real=1e-7,
                    m::Int=min(30, size(A, 1)),
-                   norm=Base.norm)
+                   norm=Base.norm, anorm::Real=0)
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
-    expmv!(t, A, result; tol=tol, m=m, norm=norm)
+    expmv!(t, A, result; tol=tol, m=m, norm=norm, anorm=anorm)
     return result
 end
 
@@ -23,13 +23,16 @@ expmv!{T}( t::Number,
            A, vec::Vector{T};
            tol::Real=1e-7,
            m::Int=min(30,size(A,1)),
-           norm=Base.norm) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
+           norm=Base.norm, anorm::Real=0) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
 function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
-                    tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm)
+                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm, anorm::Real=0)
 
     if size(vec,1) != size(A,2)
         error("dimension mismatch")
+    end
+    if anorm == 0   # set default anorm
+        anorm = hasmethod(norm, Tuple{typeof(A), typeof(Inf)}) ? norm(A, Inf) : 1.0
     end
 
     # safety factors
@@ -39,7 +42,6 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
     btol = 1e-7     # tolerance for "happy-breakdown"
     maxiter = 10    # max number of time-step refinements
 
-    anorm = norm(A, Inf)
     rndoff= anorm*eps()
 
     # estimate first time-step and round to two significant digits
