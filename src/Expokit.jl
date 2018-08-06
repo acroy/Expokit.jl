@@ -19,7 +19,7 @@ const expm! = Base.LinAlg.expm!
 
 include("expmv.jl")
 include("padm.jl")
-include("chbv.jl")
+include("chbmv.jl")
 include("phimv.jl")
 
 end # module
