@@ -35,9 +35,9 @@ function phimv{T}( t::Number,
                    A, u::Vector{T}, vec::Vector{T};
                    tol::Real=1e-7,
                    m::Int=min(30, size(A, 1)),
-                   norm=Base.norm)
+                   norm=Base.norm, anorm=nothing)
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
-    phimv!(t, A, u, result; tol=tol, m=m, norm=norm)
+    phimv!(t, A, u, result; tol=tol, m=m, norm=norm, anorm=anorm)
     return result
 end
 
@@ -45,10 +45,10 @@ phimv!{T}( t::Number,
            A, u::Vector{T}, vec::Vector{T};
            tol::Real=1e-7,
            m::Int=min(30, size(A, 1)),
-           norm=Base.norm) = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm)
+           norm=Base.norm, anorm=nothing) = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
 function phimv!{T}( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
-                    tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm)
+                    tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm, anorm=nothing)
 
     if size(vec, 1) != size(A, 2)
         error("dimension mismatch")
@@ -61,7 +61,9 @@ function phimv!{T}( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
     btol = 1e-7     # tolerance for "happy-breakdown"
     maxiter = 10    # max number of time-step refinements
 
-    anorm = norm(A, Inf)
+    if anorm === nothing
+        anorm = default_anorm(A)
+    end
     rndoff = anorm*eps()
 
     # estimate first time-step and round to two significant digits
