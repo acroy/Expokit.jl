@@ -1,6 +1,22 @@
 using Expokit
 using Base.Test
 
+struct LinearOp
+    m
+end
+
+@static if VERSION < v"0.7-"
+    Base.A_mul_B!(y, lo::LinearOp, x) = A_mul_B!(y, lo.m, x)
+else
+    import LinearAlgebra: mul!, A_mul_B!
+    mul!(y, lo::LinearOp, x) = mul!(y, lo.m, x)
+    A_mul_B!(y, lo::LinearOp, x) = A_mul_B!(y, lo.m, x)
+end
+Base.size(lo::LinearOp, i::Int) = size(lo.m, i)
+Base.eltype(lo::LinearOp) = eltype(lo.m)
+import Base: *
+*(lo::LinearOp, v::Vector) = Base.A_mul_B!(similar(v), lo, v)
+
 function test_expmv(n::Int)
 
     A = sprand(n,n,0.4)
@@ -39,6 +55,30 @@ function test_expmv3()
 
     return e1, e2
 end
+
+function test_expmv_linop(n::Int)
+    A = LinearOp(sprand(n,n,0.2) + 1im*sprand(n,n,0.2))
+    v = eye(n,1)[:]+0im*eye(n,1)[:]
+
+    tic()
+    w1 = expmv(1.0, A, v, anorm=norm(A.m, Inf))
+    t1 = toc()
+
+    tic()
+    w2 = expmv(1.0, A, v)
+    t2 = toc()
+
+    tic()
+    w3 = expm(full(A.m))*v
+    t3 = toc()
+
+    return max(norm(w1-w2)/norm(w2), norm(w1-w3)/norm(w3)), t1, t2, t3
+end
+
+println("testing linear operator n=1000 (first expmv, then expm)")
+res, t1, t2, t3 = test_expmv_linop(1000)
+println("residuum: $res\n")
+@test res < 1e-6
 
 println("testing real n=100 (first expmv, then expm)")
 res, t1, t2 = test_expmv(100)
@@ -245,5 +285,39 @@ println("residuum: $res\n")
 
 println("testing complex n=1000 (first phimv, then expm)")
 res, t1, t2 = test_phimv2(1000)
+println("residuum: $res\n")
+@test res < 1e-6
+
+function test_phimv_linop(n::Int)
+    p = 0.1
+    found = false
+    A = LinearOp(sprand(n,n,p))
+    u = rand(n)
+    x = similar(u)
+    while !found
+        try
+            copy!(x, A.m\u)
+            found = true
+        catch
+            A = LinearOp(sprand(n,n,p))
+        end
+    end
+    vec = eye(n, 1)[:]
+
+    w1 = phimv(1.0, A, u, vec) # warmup
+    tic()
+    w1 = phimv(1.0, A, u, vec)
+    t1 = toc()
+
+    w2 = expm(full(A.m))*(vec+x)-x # warmup
+    tic()
+    w2 = expm(full(A.m))*(vec+x)-x
+    t2 = toc()
+
+    return norm(w1-w2)/norm(w2), t1, t2
+end
+
+println("testing real n=1000 (first phimv, then expm), the linear operator version.")
+res, t1, t2 = test_phimv_linop(1000)
 println("residuum: $res\n")
 @test res < 1e-6

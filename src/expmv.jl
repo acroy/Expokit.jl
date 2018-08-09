@@ -1,7 +1,22 @@
 export expmv, expmv!
 
+function default_anorm(A)
+    try
+        Compat.opnorm(A, Inf)
+    catch err
+        if err isa MethodError
+            warn("opnorm($(typeof(A)), Inf) is not defined, fall back to using `anorm = 1.0`.
+To suppress this warning, please specify the anorm parameter manually.")
+            1.0
+        else
+            throw(err)
+        end
+    end
+end
+
+
 """
-    expmv{T}(t, A, vec; [tol], [m], [norm])
+    expmv{T}(t, A, vec; [tol], [m], [norm], [anorm])
 
 Calculate matrix exponential acting on some vector, ``w = e^{tA}v``,
 using the Krylov subspace approximation.
@@ -13,9 +28,9 @@ function expmv{T}( t::Number,
                    A, vec::Vector{T};
                    tol::Real=1e-7,
                    m::Int=min(30, size(A, 1)),
-                   norm=Base.norm)
+                   norm=Base.norm, anorm=default_anorm(A))
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
-    expmv!(t, A, result; tol=tol, m=m, norm=norm)
+    expmv!(t, A, result; tol=tol, m=m, norm=norm, anorm=anorm)
     return result
 end
 
@@ -23,10 +38,10 @@ expmv!{T}( t::Number,
            A, vec::Vector{T};
            tol::Real=1e-7,
            m::Int=min(30,size(A,1)),
-           norm=Base.norm) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
+           norm=Base.norm, anorm=default_anorm(A)) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
-function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
-                    tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm)
+function expmv!{T}(w::Vector{T}, t::Number, A, vec::Vector{T};
+                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm, anorm=default_anorm(A))
 
     if size(vec,1) != size(A,2)
         error("dimension mismatch")
@@ -39,7 +54,6 @@ function expmv!{T}( w::Vector{T}, t::Number, A, vec::Vector{T};
     btol = 1e-7     # tolerance for "happy-breakdown"
     maxiter = 10    # max number of time-step refinements
 
-    anorm = norm(A, Inf)
     rndoff= anorm*eps()
 
     # estimate first time-step and round to two significant digits
