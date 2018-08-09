@@ -5,7 +5,13 @@ struct LinearOp
     m
 end
 
-Base.A_mul_B!(y, lo::LinearOp, x) = A_mul_B!(y, lo.m, x)
+@static if VERSION < v"0.7-"
+    Base.A_mul_B!(y, lo::LinearOp, x) = A_mul_B!(y, lo.m, x)
+else
+    import LinearAlgebra: mul!, A_mul_B!
+    mul!(y, lo::LinearOp, x) = mul!(y, lo.m, x)
+    A_mul_B!(y, lo::LinearOp, x) = A_mul_B!(y, lo.m, x)
+end
 Base.size(lo::LinearOp, i::Int) = size(lo.m, i)
 Base.eltype(lo::LinearOp) = eltype(lo.m)
 import Base: *

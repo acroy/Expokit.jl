@@ -2,7 +2,7 @@ export expmv, expmv!
 
 function default_anorm(A)
     try
-        norm(A, Inf)
+        Compat.opnorm(A, Inf)
     catch err
         if err isa MethodError
             warn("opnorm($(typeof(A)), Inf) is not defined, fall back to using `anorm = 1.0`.
@@ -28,7 +28,7 @@ function expmv{T}( t::Number,
                    A, vec::Vector{T};
                    tol::Real=1e-7,
                    m::Int=min(30, size(A, 1)),
-                   norm=Base.norm, anorm=nothing)
+                   norm=Base.norm, anorm=default_anorm(A))
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
     expmv!(t, A, result; tol=tol, m=m, norm=norm, anorm=anorm)
     return result
@@ -38,18 +38,13 @@ expmv!{T}( t::Number,
            A, vec::Vector{T};
            tol::Real=1e-7,
            m::Int=min(30,size(A,1)),
-           norm=Base.norm, anorm=nothing) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
+           norm=Base.norm, anorm=default_anorm(A)) = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
 function expmv!{T}(w::Vector{T}, t::Number, A, vec::Vector{T};
-                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm, anorm=nothing)
+                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm, anorm=default_anorm(A))
 
     if size(vec,1) != size(A,2)
         error("dimension mismatch")
-    end
-
-    # set default anorm
-    if anorm === nothing
-        anorm = default_anorm(A)
     end
 
     # safety factors
