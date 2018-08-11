@@ -1,5 +1,5 @@
 using Expokit
-using Base.Test
+using Compat.Test
 
 struct LinearOp
     m
