@@ -1,7 +1,7 @@
 export phimv, phimv!
 
 """
-    phimv{T}(t, A, u, vec; [tol], [m], [norm])
+    phimv{T}(t, A, u, vec; [tol], [m], [norm], [anorm])
 
 Calculate the solution of a nonhomogeneous linear ODE problem with constant input
 ``w = e^{tA}v + tφ(tA)u`` using the Krylov subspace approximation.
@@ -31,24 +31,26 @@ Calculate the solution of a nonhomogeneous linear ODE problem with constant inpu
     EXPOKIT: Software Package for Computing Matrix Exponentials.
     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 """
-function phimv(t::Number,
-               A, u::Vector{T}, vec::Vector{T};
-               tol::Real=1e-7,
-               m::Int=min(30, size(A, 1)),
-               norm=Base.norm) where {T}
+
+function phimv( t::Number,
+                   A, u::Vector{T}, vec::Vector{T};
+                   tol::Real=1e-7,
+                   m::Int=min(30, size(A, 1)),
+                   norm=Base.norm, anorm=default_anorm(A)) where {T}
+
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
-    phimv!(t, A, u, result; tol=tol, m=m, norm=norm)
+    phimv!(t, A, u, result; tol=tol, m=m, norm=norm, anorm=anorm)
     return result
 end
 
-phimv!(t::Number,
-       A, u::Vector{T}, vec::Vector{T};
-       tol::Real=1e-7,
-       m::Int=min(30, size(A, 1)),
-       norm=Base.norm) where {T} = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm)
+phimv!( t::Number,
+           A, u::Vector{T}, vec::Vector{T};
+           tol::Real=1e-7,
+           m::Int=min(30, size(A, 1)),
+           norm=Base.norm, anorm=default_anorm(A)) where {T} = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
-function phimv!(w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
-                tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm) where {T}
+function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
+                   tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm, anorm=default_anorm(A)) where {T}
 
     if size(vec, 1) != size(A, 2)
         error("dimension mismatch")
@@ -61,7 +63,6 @@ function phimv!(w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
     btol = 1e-7     # tolerance for "happy-breakdown"
     maxiter = 10    # max number of time-step refinements
 
-    anorm = norm(A, Inf)
     rndoff = anorm*eps()
 
     # estimate first time-step and round to two significant digits
@@ -94,7 +95,7 @@ function phimv!(w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
         scale!(copy!(vm[1], A*w+u), 1/beta)
 
         for j = 1:m
-            A_mul_B!(p, A, vm[j])
+            Base.A_mul_B!(p, A, vm[j])
 
             for i = 1:j
                 hm[i, j] = dot(vm[i], p)

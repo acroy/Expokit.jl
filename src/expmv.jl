@@ -1,7 +1,22 @@
 export expmv, expmv!
 
+function default_anorm(A)
+    try
+        Compat.opnorm(A, Inf)
+    catch err
+        if err isa MethodError
+            warn("opnorm($(typeof(A)), Inf) is not defined, fall back to using `anorm = 1.0`.
+To suppress this warning, please specify the anorm parameter manually.")
+            1.0
+        else
+            throw(err)
+        end
+    end
+end
+
+
 """
-    expmv{T}(t, A, vec; [tol], [m], [norm])
+    expmv{T}(t, A, vec; [tol], [m], [norm], [anorm])
 
 Calculate matrix exponential acting on some vector, ``w = e^{tA}v``,
 using the Krylov subspace approximation.
@@ -9,24 +24,25 @@ using the Krylov subspace approximation.
 See R.B. Sidje, ACM Trans. Math. Softw., 24(1):130-156, 1998
 and http://www.maths.uq.edu.au/expokit
 """
-function expmv(t::Number,
-               A, vec::Vector{T};
-               tol::Real=1e-7,
-               m::Int=min(30, size(A, 1)),
-               norm=Base.norm) where {T}
+function expmv( t::Number,
+                   A, vec::Vector{T};
+                   tol::Real=1e-7,
+                   m::Int=min(30, size(A, 1)),
+                   norm=Base.norm, anorm=default_anorm(A)) where {T}
+
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
-    expmv!(t, A, result; tol=tol, m=m, norm=norm)
+    expmv!(t, A, result; tol=tol, m=m, norm=norm, anorm=anorm)
     return result
 end
 
-expmv!(t::Number,
-       A, vec::Vector{T};
-       tol::Real=1e-7,
-       m::Int=min(30,size(A,1)),
-       norm=Base.norm) where {T} = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm)
+expmv!( t::Number,
+           A, vec::Vector{T};
+           tol::Real=1e-7,
+           m::Int=min(30,size(A,1)),
+           norm=Base.norm, anorm=default_anorm(A)) where {T} = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
 function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
-                tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm) where {T}
+                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm, anorm=default_anorm(A)) where {T}
 
     if size(vec,1) != size(A,2)
         error("dimension mismatch")
@@ -39,7 +55,6 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
     btol = 1e-7     # tolerance for "happy-breakdown"
     maxiter = 10    # max number of time-step refinements
 
-    anorm = norm(A, Inf)
     rndoff= anorm*eps()
 
     # estimate first time-step and round to two significant digits
