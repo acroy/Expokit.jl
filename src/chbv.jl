@@ -77,7 +77,7 @@ chbv!(A, vec::Vector{T}) where {T} = chbv!(vec, A, copy(vec))
 
 function chbv!(w::Vector{T}, A, vec::Vector{T}) where {T<:Real}
     p = min(length(θ), length(α))
-    scale!(copy!(w, vec), α0)
+    rmul!(copyto!(w, vec), α0)
     @inbounds for i = 1:p
         w .+= real((A - θ[i]*I) \ (α[i] * vec))
     end
@@ -86,7 +86,7 @@ end
 
 function chbv!(w::Vector{T}, A, vec::Vector{T}) where {T<:Complex}
     p = min(length(θ), length(α))
-    scale!(copy!(w, vec), α0)
+    rmul!(copyto!(w, vec), α0)
     t = [θ; θconj]
     a = 0.5 * [α; αconj]
     @inbounds for i = 1:2*p

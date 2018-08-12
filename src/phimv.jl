@@ -31,12 +31,11 @@ Calculate the solution of a nonhomogeneous linear ODE problem with constant inpu
     EXPOKIT: Software Package for Computing Matrix Exponentials.
     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 """
-
 function phimv( t::Number,
                    A, u::Vector{T}, vec::Vector{T};
                    tol::Real=1e-7,
                    m::Int=min(30, size(A, 1)),
-                   norm=Base.norm, anorm=default_anorm(A)) where {T}
+                   norm=LinearAlgebra.norm, anorm=default_anorm(A)) where {T}
 
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
     phimv!(t, A, u, result; tol=tol, m=m, norm=norm, anorm=anorm)
@@ -47,10 +46,10 @@ phimv!( t::Number,
            A, u::Vector{T}, vec::Vector{T};
            tol::Real=1e-7,
            m::Int=min(30, size(A, 1)),
-           norm=Base.norm, anorm=default_anorm(A)) where {T} = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm, anorm=anorm)
+           norm=LinearAlgebra.norm, anorm=default_anorm(A)) where {T} = phimv!(vec, t, A, u, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
 function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
-                   tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=Base.norm, anorm=default_anorm(A)) where {T}
+                   tol::Real=1e-7, m::Int=min(30, size(A, 1)), norm=LinearAlgebra.norm, anorm=default_anorm(A)) where {T}
 
     if size(vec, 1) != size(A, 2)
         error("dimension mismatch")
@@ -70,10 +69,10 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
     r = 1/m
     fact = (((m+1)/exp(1))^(m+1))*sqrt(2*pi*(m+1))
     tau = (1.0/anorm)*((fact*tol)/(4.0*beta*anorm))^r
-    tau = signif(tau, 2)
+    tau = round(tau, sigdigits=2)
 
     # storage for Krylov subspace vectors
-    vm = Array{typeof(w)}(m+1)
+    vm = Array{typeof(w)}(undef,m+1)
     for i = 1:m+1
         vm[i] = similar(w)
     end
@@ -83,7 +82,7 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
     tsgn = sign(t)
     tk = zero(tf)
 
-    copy!(w, vec)
+    copyto!(w, vec)
     p = similar(w)
     k1 = 3
     mb = m
@@ -92,10 +91,10 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
         tau = min(tf-tk, tau)
 
         # Arnoldi procedure
-        scale!(copy!(vm[1], A*w+u), 1/beta)
+        rmul!(copyto!(vm[1], A*w+u), 1/beta)
 
         for j = 1:m
-            Base.A_mul_B!(p, A, vm[j])
+            mul!(p, A, vm[j])
 
             for i = 1:j
                 hm[i, j] = dot(vm[i], p)
@@ -110,7 +109,7 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
                 break
             end
             hm[j+1,j] = s
-            scale!(copy!(vm[j+1], p), 1/hm[j+1,j])
+            rmul!(copyto!(vm[j+1], p), 1/hm[j+1,j])
         end
 
         hm[1, mb+1] = one(T)
@@ -125,7 +124,7 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
         iter = 0
         while iter <= maxiter
             mx = mb + max(1,k1)
-            F = expm!(tsgn*tau*view(hm, 1:mx, 1:mx))
+            F = exp!(tsgn*tau*view(hm, 1:mx, 1:mx))
             if k1 == 0
                 err_loc = btol
                 break
@@ -151,7 +150,7 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
                 break
             else
                 tau = gamma * tau * (tau*tol/err_loc)^r # estimate new time-step
-                tau = signif(tau, 2) # round to 2 signiﬁcant digits
+                tau = round(tau, sigdigits=2) # round to 2 signiﬁcant digits
                                      # to prevent numerical noise
                 if iter == maxiter
                     error("Number of iterations exceeded $(maxiter). Requested tolerance might be too high.")
@@ -169,7 +168,7 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
         tk = tk + tau
 
         tau = gamma * tau * (tau*tol/err_loc)^r # estimate new time-step
-        tau = signif(tau, 2) # round to 2 signiﬁcant digits
+        tau = round(tau, sigdigits=2) # round to 2 signiﬁcant digits
                              # to prevent numerical noise
 
         err_loc = max(err_loc, rndoff)

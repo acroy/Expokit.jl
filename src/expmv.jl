@@ -2,11 +2,11 @@ export expmv, expmv!
 
 function default_anorm(A)
     try
-        Compat.opnorm(A, Inf)
+        opnorm(A, Inf)
     catch err
         if err isa MethodError
-            warn("opnorm($(typeof(A)), Inf) is not defined, fall back to using `anorm = 1.0`.
-To suppress this warning, please specify the anorm parameter manually.")
+            @warn "opnorm($(typeof(A)), Inf) is not defined, fall back to using `anorm = 1.0`.
+To suppress this warning, please specify the anorm keyword manually."
             1.0
         else
             throw(err)
@@ -28,7 +28,7 @@ function expmv( t::Number,
                    A, vec::Vector{T};
                    tol::Real=1e-7,
                    m::Int=min(30, size(A, 1)),
-                   norm=Base.norm, anorm=default_anorm(A)) where {T}
+                   norm=LinearAlgebra.norm, anorm=default_anorm(A)) where {T}
 
     result = convert(Vector{promote_type(eltype(A), T, typeof(t))}, copy(vec))
     expmv!(t, A, result; tol=tol, m=m, norm=norm, anorm=anorm)
@@ -39,10 +39,10 @@ expmv!( t::Number,
            A, vec::Vector{T};
            tol::Real=1e-7,
            m::Int=min(30,size(A,1)),
-           norm=Base.norm, anorm=default_anorm(A)) where {T} = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
+           norm=LinearAlgebra.norm, anorm=default_anorm(A)) where {T} = expmv!(vec, t, A, vec; tol=tol, m=m, norm=norm, anorm=anorm)
 
 function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
-                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=Base.norm, anorm=default_anorm(A)) where {T}
+                   tol::Real=1e-7, m::Int=min(30,size(A,1)), norm=LinearAlgebra.norm, anorm=default_anorm(A)) where {T}
 
     if size(vec,1) != size(A,2)
         error("dimension mismatch")
@@ -62,10 +62,10 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
     r = 1/m
     fact = (((m+1)/exp(1.0))^(m+1))*sqrt(2.0*pi*(m+1))
     tau = (1.0/anorm)*((fact*tol)/(4.0*beta*anorm))^r
-    tau = signif(tau, 2)
+    tau = round(tau, sigdigits=2)
 
     # storage for Krylov subspace vectors
-    vm = Array{typeof(w)}(m+1)
+    vm = Array{typeof(w)}(undef,m+1)
     for i=1:m+1
         vm[i]=similar(w)
     end
@@ -75,7 +75,7 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
     tsgn = sign(t)
     tk = zero(tf)
 
-    copy!(w, vec)
+    copyto!(w, vec)
     p = similar(w)
     mx = m
     while tk < tf
@@ -83,11 +83,11 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
 
         # Arnoldi procedure
         # vm[1] = v/beta
-        scale!(copy!(vm[1],w),1/beta)
+        rmul!(copyto!(vm[1],w),1/beta)
         mx = m
         for j=1:m
             # p[:] = A*vm[j]
-            Base.A_mul_B!(p, A, vm[j])
+            mul!(p, A, vm[j])
 
             for i=1:j
                 hm[i,j] = dot(vm[i], p)
@@ -102,7 +102,7 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
 
                 # F = expm(tsgn*tau*hm[1:j,1:j])
                 # F = expm!(scale(tsgn*tau,view(hm,1:j,1:j)))
-                F = expm!(tsgn*tau*view(hm,1:j,1:j))
+                F = exp!(tsgn*tau*view(hm,1:j,1:j))
 
                 fill!(w, zero(T))
                 for k=1:j
@@ -115,10 +115,10 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
             hm[j+1,j] = s
 
             # vm[j+1] = p/hm[j+1,j]
-            scale!(copy!(vm[j+1],p),1/hm[j+1,j])
+            rmul!(copyto!(vm[j+1],p),1/hm[j+1,j])
         end
         hm[m+2,m+1] = one(T)
-        (mx != m) || (avnorm = norm(Base.A_mul_B!(p,A,vm[m+1])))
+        (mx != m) || (avnorm = norm(mul!(p,A,vm[m+1])))
 
         # propagate using adaptive step size
         iter = 1
@@ -126,7 +126,7 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
 
             # F = expm(tsgn*tau*hm)
             # F = expm!(scale(tsgn*tau,hm))
-            F = expm!(tsgn*tau*hm)
+            F = exp!(tsgn*tau*hm)
 
             # local error estimation
             err1 = abs( beta*F[m+1,1] )
@@ -154,7 +154,7 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
                 break
             end
             tau = gamma * tau * (tau*tol/err_loc)^r # estimate new time-step
-            tau = signif(tau, 2) # round to 2 signiﬁcant digits
+            tau = round(tau, sigdigits=2) # round to 2 signiﬁcant digits
                                  # to prevent numerical noise
             iter = iter + 1
         end
@@ -167,7 +167,7 @@ function expmv!(w::Vector{T}, t::Number, A, vec::Vector{T};
         tk = tk + tau
 
         tau = gamma * tau * (tau*tol/err_loc)^r # estimate new time-step
-        tau = signif(tau, 2) # round to 2 signiﬁcant digits
+        tau = round(tau, sigdigits=2) # round to 2 signiﬁcant digits
                              # to prevent numerical noise
         err_loc = max(err_loc,rndoff)
 
