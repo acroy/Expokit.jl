@@ -6,7 +6,7 @@ function default_anorm(A)
     catch err
         if err isa MethodError
             @warn "opnorm($(typeof(A)), Inf) is not defined, fall back to using `anorm = 1.0`.
-To suppress this warning, please specify the anorm keyword manually."
+To suppress this warning, please specify the `anorm` keyword manually."
             1.0
         else
             throw(err)
