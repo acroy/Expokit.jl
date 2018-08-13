@@ -56,7 +56,7 @@ function padm(A; p::Int64=6)
     end
 
     # scaling
-    normA = norm(A, Inf)
+    normA = opnorm(A, Inf)
     s = 0
     if normA > 0.5
         s = max(0, round(Int64, log(normA)/log(2), RoundToZero) + 2)
@@ -65,8 +65,8 @@ function padm(A; p::Int64=6)
 
     # Horner evaluation of the irreducible fraction
     A2 = A * A
-    Q = c[p+1]*eye(A)
-    P = c[p]*eye(A)
+    Q = c[p+1]*Matrix{eltype(A)}(I, size(A))
+    P = c[p]*Matrix{eltype(A)}(I, size(A))
     odd = 1
     @inbounds begin 
         for k = p-1:-1:1
@@ -82,11 +82,11 @@ function padm(A; p::Int64=6)
     if odd == 1
         Q = Q * A
         Q = Q - P
-        E = -(I + 2 * \(Q, full(P)))
+        E = -(I + 2 * \(Q, Matrix(P)))
     else
         P = P * A
         Q = Q - P
-        E = I + 2 * \(Q, full(P))
+        E = I + 2 * \(Q, Matrix(P))
     end
 
     # squaring

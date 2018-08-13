@@ -22,7 +22,7 @@ Pkg.add("Expokit")
 w = expmv!{T}( w::Vector{T}, t::Number, A, v::Vector{T}; kwargs...)
 ```
 The function `expmv!` calculates `w = exp(t*A)*v`, where `A` is a
-matrix or any type that supports `size` and `A_mul_B!` and `v` a dense vector by using Krylov subspace projections. The result is
+matrix or any type that supports `size`, `eltype` and `mul!` and `v` is a dense vector by using Krylov subspace projections. The result is
 stored in `w`.
 
 The following keywords are supported
@@ -43,7 +43,7 @@ w = expmv{T}( t::Number, A, v::Vector{T}; kwargs...)
 w = phimv!{T}( w::Vector{T}, t::Number, A, u::Vector{T}, v::Vector{T}; kwargs...)
 ```
 The function `phimv!` calculates `w = e^{tA}v + t φ(t A) u` with `φ(z) = (exp(z)-1)/z`, where `A` is a
-matrix or any type that supports `size` and `A_mul_B!`, `u` and `v` are dense vectors by using Krylov subspace projections. The result is stored in `w`. The supported keywords are the same as for `expmv!`.
+matrix or any type that supports `size`, `eltype` and `mul!`, `u` and `v` are dense vectors by using Krylov subspace projections. The result is stored in `w`. The supported keywords are the same as for `expmv!`.
 
 ## chbv
 
