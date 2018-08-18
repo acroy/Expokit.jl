@@ -21,6 +21,6 @@ The Expokit.jl package is licensed under the MIT "Expat" License:
 > TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 > SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-The function expv is a Julia implementation of the routine expv.m which is
+The functions expmv, phimv, chbv and padm are Julia implementations of the respective routines which are
 part of EXPOKIT (see http://www.maths.uq.edu.au/expokit) authored by
 Roger B. Sidje <rbs@maths.uq.edu.au>.
