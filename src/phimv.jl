@@ -65,7 +65,11 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
     rndoff = anorm*eps()
 
     # estimate first time-step and round to two significant digits
-    beta = norm(A*vec + u)
+    #beta = norm(A*vec + u)
+    avtmp = similar(u)
+    mul!(avtmp, A, vec)
+    avtmp .+= u
+    beta = norm(avtmp)
     r = 1/m
     fact = (((m+1)/exp(1))^(m+1))*sqrt(2*pi*(m+1))
     tau = (1.0/anorm)*((fact*tol)/(4.0*beta*anorm))^r
@@ -91,7 +95,8 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
         tau = min(tf-tk, tau)
 
         # Arnoldi procedure
-        rmul!(copyto!(vm[1], A*w+u), 1/beta)
+        # rmul!(copyto!(vm[1], A*w+u), 1/beta)
+        rmul!(copyto!(vm[1], avtmp), 1/beta)
 
         for j = 1:m
             mul!(p, A, vm[j])
@@ -116,7 +121,8 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
         if k1 != 0
             hm[m+1,m+2] = one(T); hm[m+2,m+3] = one(T)
             h = hm[m+1,m]; hm[m+1,m] = zero(T)
-            avnorm = norm(A*vm[m+1])
+            # avnorm = norm(A*vm[m+1])
+            avnorm = norm(mul!(p, A, vm[m+1]))
         end
 
         local F
@@ -164,7 +170,10 @@ function phimv!( w::Vector{T}, t::Number, A, u::Vector{T}, vec::Vector{T};
             w = axpy!(beta*F[k, mb+1], vm[k], w)
         end
 
-        beta = norm(A*w + u)
+        # beta = norm(A*w + u)
+        mul!(avtmp, A, w)
+        avtmp .+= u
+        beta = norm(avtmp)
         tk = tk + tau
 
         tau = gamma * tau * (tau*tol/err_loc)^r # estimate new time-step

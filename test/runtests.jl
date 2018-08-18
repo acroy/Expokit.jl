@@ -54,10 +54,6 @@ LinearAlgebra.mul!(y, lo::LinearOp, x) = mul!(y, lo.m, x)
 Base.size(lo::LinearOp, i::Int) = size(lo.m, i)
 Base.eltype(lo::LinearOp) = eltype(lo.m)
 
-# needed for phimv
-import Base: *
-*(lo::LinearOp, v::Vector) = mul!(similar(v), lo, v)
-
 
 function test_expmv_linop(n::Int)
     A = LinearOp(sprand(n,n,0.2) + 1im*sprand(n,n,0.2))
