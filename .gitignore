@@ -1,2 +1,11 @@
 .DS_Store
 .DS_Store?
+
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+coverage/
+
+.vscode
+
+Manifest.toml
